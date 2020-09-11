@@ -4,10 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
 import android.view.View
-import android.view.animation.Animation
-import android.view.animation.AnimationUtils
 import com.qmuiteam.qmui.util.QMUIKeyboardHelper
 import com.qmuiteam.qmui.widget.dialog.QMUITipDialog
 import com.qmuiteam.qmui.widget.popup.QMUIListPopup
@@ -23,6 +20,7 @@ class HomeActivity : AppCompatActivity(), TTsHelper.OnTtsCallback {
     private var mSharedPreferences: SharedPreferences? = null
     private lateinit var mTTs: TTsHelper
     private var toast: AppToast? = null
+    private var recordHelper: RecordHelper? = null
 
     companion object {
         const val TAG: String = "TTS-willpower"
@@ -31,30 +29,34 @@ class HomeActivity : AppCompatActivity(), TTsHelper.OnTtsCallback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
+        PermissionsHelper.request(this)
         context = this
         speakerSelector()
         synthesis()
         initListener()
         initContent()
-        PermissionsHelper.request(this)
+        initRecord()
         mTTs = TTsHelper(this, this)
     }
 
     /**
      * 设置
      */
-    private fun initConfig(){
-        imgRecord.setOnClickListener {  }
+    private fun initConfig() {
+        imgRecord.setOnClickListener { }
     }
 
     /**
      * 合成记录
      */
-    private fun initRecord(){
+    private fun initRecord() {
+        recordHelper = RecordHelper(context)
+        val mRecordGroup = recordGroup
         imgRecord.setOnClickListener {
-            if (recordGroup.visibility == View.VISIBLE){
-                AnimationUtils.loadAnimation(context,R.anim.anim_record_hide)
-            }
+            recordHelper!!.show(mRecordGroup)
+        }
+        imgCloseRecord.setOnClickListener {
+            recordHelper!!.hide(mRecordGroup)
         }
     }
 
@@ -129,7 +131,7 @@ class HomeActivity : AppCompatActivity(), TTsHelper.OnTtsCallback {
     }
 
     override fun onError(code: Int) {
-        showToast(AppToast.ICON_TYPE_FAIL,"异常：$code")
+        showToast(AppToast.ICON_TYPE_FAIL, "异常：$code")
     }
 
     private fun showToast(iconType: Int, msg: String) {
