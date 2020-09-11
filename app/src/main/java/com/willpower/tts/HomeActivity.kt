@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
+import android.util.Log
 import android.view.View
 import com.qmuiteam.qmui.util.QMUIKeyboardHelper
 import com.qmuiteam.qmui.widget.dialog.QMUITipDialog
@@ -58,6 +59,7 @@ class HomeActivity : AppCompatActivity(), TTsHelper.OnTtsCallback {
         imgCloseRecord.setOnClickListener {
             recordHelper!!.hide(mRecordGroup)
         }
+        Record.list().forEach()
     }
 
     /**
@@ -126,7 +128,7 @@ class HomeActivity : AppCompatActivity(), TTsHelper.OnTtsCallback {
         showProgress(percent)
     }
 
-    override fun onSynthesizer(path: String?) {
+    override fun onSynthesizer() {
         toast?.dismiss()
     }
 
