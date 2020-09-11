@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/qmui_tip_dialog_wrap"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:id="@+id/imgGroup"
+        android:layout_width="60dp"
+        android:layout_height="60dp">
+
+        <com.willpower.tts.ProgressView
+            android:id="@+id/loading"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center" />
+
+        <ImageView
+            android:id="@+id/icon"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center"
+            android:src="@drawable/qmui_icon_notify_done" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/tipWord"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+</LinearLayout>

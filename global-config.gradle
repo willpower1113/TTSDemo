@@ -1,0 +1,23 @@
+/** 全局配置 */
+
+/** sdk version */
+
+ext.sdk = [
+        compileSdkVersion: 28,
+        minSdkVersion    : 19,
+        targetSdkVersion : 28,
+        kotlin           : "org.jetbrains.kotlin:kotlin-stdlib-jre7:$kotlin_version"
+]
+
+/** Library */
+ext.library = [
+        support             : [
+                appcompat_v7: "com.android.support:appcompat-v7:28.0.0"
+        ],
+        rxjava              : "io.reactivex.rxjava3:rxjava:3.0.0",
+        rxandroid           : "io.reactivex.rxjava3:rxandroid:3.0.0",
+        qmui                : "com.qmuiteam:qmui:1.4.0",
+        quickadapter        : "com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.42",
+        butterknife         : "com.jakewharton:butterknife:8.8.1",
+        butterknife_compiler: "com.jakewharton:butterknife-compiler:8.8.1"
+]

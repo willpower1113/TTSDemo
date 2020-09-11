@@ -1,0 +1,8 @@
+<resources>
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="QMUI.Compat.NoActionBar">
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="colorPrimary">@color/qmui_btn_blue_border</item>
+        <item name="colorPrimaryDark">@color/qmui_btn_blue_border</item>
+    </style>
+</resources>
