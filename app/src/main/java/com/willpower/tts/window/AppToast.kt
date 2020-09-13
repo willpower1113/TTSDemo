@@ -1,4 +1,4 @@
-package com.willpower.tts
+package com.willpower.tts.window
 
 import android.app.Dialog
 import android.content.Context
@@ -11,6 +11,8 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
+import com.willpower.tts.ProgressView
+import com.willpower.tts.R
 
 class AppToast : Dialog {
     companion object {

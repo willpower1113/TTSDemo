@@ -1,8 +1,10 @@
 package com.willpower.tts
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Environment
+import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import com.iflytek.cloud.*
 
@@ -18,9 +20,11 @@ class TTsHelper(context: Context, listener: OnTtsCallback) {
     private var mListener = listener
     private var currentPath: String? = null
     private var currentName: String? = null
-    private var record:Record? = null
+    private var record: Record? = null
+    private var mSharedPreferences: SharedPreferences? = null
 
     init {
+        mSharedPreferences = mContext.getSharedPreferences("tts", AppCompatActivity.MODE_PRIVATE)
         SpeechUtility.createUtility(mContext, SpeechConstant.APPID + "=${Config.appId}")
         mTts = SpeechSynthesizer.createSynthesizer(mContext) {
             if (it != ErrorCode.SUCCESS)
@@ -29,7 +33,7 @@ class TTsHelper(context: Context, listener: OnTtsCallback) {
         }
     }
 
-    fun startSynthesis(voicer: String, content: String) {
+    fun startSynthesis(voicer: String, name: String, content: String) {
         if (!ttsInit) {
             Log.e(TAG, "please be init first!!")
             return
@@ -38,7 +42,7 @@ class TTsHelper(context: Context, listener: OnTtsCallback) {
         val createTime = System.currentTimeMillis()
         currentName = "$createTime.wav"
         currentPath = Config.ttsPath + currentName
-        record = Record(voicer,content,currentPath!!)
+        record = Record(name, content, currentPath!!)
         var code = mTts!!.synthesizeToUri(content, currentPath, synthesisListener)
         if (code != ErrorCode.SUCCESS) {
             mListener.onError(code)
@@ -55,11 +59,11 @@ class TTsHelper(context: Context, listener: OnTtsCallback) {
         // 设置在线合成发音人
         mTts!!.setParameter(SpeechConstant.VOICE_NAME, voicer)
         //设置合成语速
-        mTts!!.setParameter(SpeechConstant.SPEED, "50")
+        mTts!!.setParameter(SpeechConstant.SPEED, "${mSharedPreferences!!.getInt("speed", 50)}")
         //设置合成音调
-        mTts!!.setParameter(SpeechConstant.PITCH, "50")
+        mTts!!.setParameter(SpeechConstant.PITCH, "${mSharedPreferences!!.getInt("pitch", 50)}")
         //设置合成音量
-        mTts!!.setParameter(SpeechConstant.VOLUME, "50")
+        mTts!!.setParameter(SpeechConstant.VOLUME, "${mSharedPreferences!!.getInt("volume", 50)}")
         //设置播放器音频流类型
         mTts!!.setParameter(SpeechConstant.STREAM_TYPE, "3")
         // 设置播放合成音频打断音乐播放，默认为true

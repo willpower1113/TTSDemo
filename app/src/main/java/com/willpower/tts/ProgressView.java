@@ -85,7 +85,7 @@ public class ProgressView extends View {
             public void run() {
                 postInvalidate();
             }
-        }, 100, 100);
+        }, 100, 180);
 
     }
 

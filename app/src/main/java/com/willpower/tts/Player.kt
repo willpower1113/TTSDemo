@@ -11,10 +11,11 @@ import java.io.File
 object Player {
     private var player: MediaPlayer? = null
 
-    fun play(context: Context, raw: Int) {
+    fun play(context: Context, raw: Int, listener: MediaPlayer.OnCompletionListener) {
         if (player != null)
             stop()
         player = MediaPlayer.create(context, raw)
+        player?.setOnCompletionListener(listener)
         player!!.start()
     }
 

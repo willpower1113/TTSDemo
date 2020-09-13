@@ -11,7 +11,9 @@ data class Record(var voicer: String, var info: String, var absolutePath: String
         val oos: ObjectOutputStream
         try {
             val file = File(absolutePath)
-            fos = context.openFileOutput("${BuildConfig.APPLICATION_ID}_${file.name}", Context.MODE_PRIVATE)
+            var name ="${BuildConfig.APPLICATION_ID}_${file.name}"
+            Log.e(TTsHelper.TAG,"写入：$name")
+            fos = context.openFileOutput(name, Context.MODE_PRIVATE)
             oos = ObjectOutputStream(fos)
             oos.writeObject(this)
             oos.close()
@@ -23,12 +25,14 @@ data class Record(var voicer: String, var info: String, var absolutePath: String
     }
 
     companion object {
-        fun read(context: Context, simpleName: Long): Record? {
+        fun read(context: Context, simpleName: String): Record? {
             var record: Record? = null
             val fis: FileInputStream
             val ois: ObjectInputStream
             try {
-                fis = context.openFileInput("${BuildConfig.APPLICATION_ID}_$simpleName")
+                var name ="${BuildConfig.APPLICATION_ID}_$simpleName"
+                Log.e(TTsHelper.TAG,"读取：$name")
+                fis = context.openFileInput(name)
                 ois = ObjectInputStream(fis)
                 record = ois.readObject() as Record
                 ois.close()

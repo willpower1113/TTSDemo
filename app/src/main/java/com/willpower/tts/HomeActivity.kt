@@ -2,38 +2,43 @@ package com.willpower.tts
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
+import android.support.v7.widget.LinearLayoutManager
 import android.view.View
+import com.chad.library.adapter.base.BaseQuickAdapter
+import com.chad.library.adapter.base.listener.OnItemChildClickListener
 import com.qmuiteam.qmui.util.QMUIKeyboardHelper
+import com.qmuiteam.qmui.widget.dialog.QMUIDialog
 import com.qmuiteam.qmui.widget.dialog.QMUITipDialog
-import com.qmuiteam.qmui.widget.popup.QMUIListPopup
+import com.willpower.tts.window.AppToast
+import com.willpower.tts.window.ConfigDialog
+import com.willpower.tts.window.SpeakerWindow
 import kotlinx.android.synthetic.main.activity_home.*
+
 
 /**
  * 错误码查询：https://www.xfyun.cn/document/error-code
  */
 class HomeActivity : AppCompatActivity(), TTsHelper.OnTtsCallback {
     lateinit var context: Context
-    private var speakerWindow: QMUIListPopup? = null
-    private var voicer: String? = null//发音人
+    private var speakerWindow: QMUIDialog? = null
+    private var voicerPosition: Int = 0//发音人
     private var mSharedPreferences: SharedPreferences? = null
     private lateinit var mTTs: TTsHelper
     private var toast: AppToast? = null
     private var recordHelper: RecordHelper? = null
-
-    companion object {
-        const val TAG: String = "TTS-willpower"
-    }
+    private var recordAdapter: RecordAdapter? = null
+    private var configDialog: ConfigDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
-        PermissionsHelper.request(this)
         context = this
         speakerSelector()
         synthesis()
+        initConfig()
         initListener()
         initContent()
         initRecord()
@@ -44,7 +49,11 @@ class HomeActivity : AppCompatActivity(), TTsHelper.OnTtsCallback {
      * 设置
      */
     private fun initConfig() {
-        imgRecord.setOnClickListener { }
+        imgSetting.setOnClickListener {
+            if (configDialog == null)
+                configDialog = ConfigDialog(context)
+            configDialog?.show()
+        }
     }
 
     /**
@@ -55,11 +64,41 @@ class HomeActivity : AppCompatActivity(), TTsHelper.OnTtsCallback {
         val mRecordGroup = recordGroup
         imgRecord.setOnClickListener {
             recordHelper!!.show(mRecordGroup)
+            QMUIKeyboardHelper.hideKeyboard(ttsEdit)
+            var recordList: ArrayList<Record> = arrayListOf()
+            Record.list().forEach {
+                Record.read(context, it)?.let { it1 -> recordList.add(it1) }
+            }
+            recordAdapter?.setNewData(recordList)
         }
         imgCloseRecord.setOnClickListener {
             recordHelper!!.hide(mRecordGroup)
         }
-        Record.list().forEach()
+        recordAdapter = RecordAdapter()
+        mRecordList.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        mRecordList.adapter = recordAdapter
+        mRecordList.addOnItemTouchListener(object : OnItemChildClickListener() {
+            override fun onSimpleItemChildClick(adapter: BaseQuickAdapter<*, *>?, view: View?, position: Int) {
+                when (view?.id) {
+                    R.id.startListener -> {
+                        Player.play(context, recordAdapter!!.data[position].absolutePath, MediaPlayer.OnCompletionListener { recordAdapter!!.removeSelect() })
+                        recordAdapter!!.select(position)
+                    }
+                    R.id.stopListener -> {
+                        Player.stop()
+                        recordAdapter!!.removeSelect()
+                    }
+                    R.id.layoutClick -> {
+                        QMUIDialog.MenuDialogBuilder(context)
+                                .addItem("发送") { dialog, _ ->
+                                    ShareHelper.toWeChat(context, recordAdapter!!.data[position].absolutePath)
+                                    dialog.dismiss()
+                                }
+                                .show()
+                    }
+                }
+            }
+        })
     }
 
     /**
@@ -77,17 +116,17 @@ class HomeActivity : AppCompatActivity(), TTsHelper.OnTtsCallback {
      */
     private fun speakerSelector() {
         mSharedPreferences = getSharedPreferences("tts", MODE_PRIVATE)
-        voicer = mSharedPreferences?.getString("voicer", SpeakerWindow.speaker[0]["speaker"])
-        ttsTv.text = voicer
+        voicerPosition = mSharedPreferences?.getInt("voicer", 0)!!
+        ttsTv.text = SpeakerWindow.speaker[voicerPosition]["speaker"].toString()
         ttsTv.setOnClickListener {
             if (speakerWindow == null) {
                 speakerWindow = SpeakerWindow(context, object : SpeakerWindow.OnItemChildClickListener {
-                    override fun onChoose(speaker: String, value: String) {
-                        switchSpeaker(speaker, value)
+                    override fun onChoose(position: Int) {
+                        switchSpeaker(position)
                     }
                 }).getWindow()
             }
-            speakerWindow?.show(ttsTv)
+            speakerWindow?.show()
         }
     }
 
@@ -98,11 +137,17 @@ class HomeActivity : AppCompatActivity(), TTsHelper.OnTtsCallback {
         startListener.setOnClickListener {
             startListener.visibility = View.GONE
             stopListener.visibility = View.VISIBLE
+            Player.play(context, SpeakerWindow.speaker[voicerPosition]["raw"] as Int, MediaPlayer.OnCompletionListener {
+                startListener.visibility = View.VISIBLE
+                stopListener.visibility = View.GONE
+                Player.stop()
+            })
         }
 
         stopListener.setOnClickListener {
             startListener.visibility = View.VISIBLE
             stopListener.visibility = View.GONE
+            Player.stop()
         }
     }
 
@@ -114,14 +159,16 @@ class HomeActivity : AppCompatActivity(), TTsHelper.OnTtsCallback {
             if (ttsEdit.text!!.isEmpty()) {
                 showToast(QMUITipDialog.Builder.ICON_TYPE_INFO, "请输入要合成的内容！")
             } else {
-                mTTs.startSynthesis(Config.test_content, voicer!!)
+                mTTs.startSynthesis(SpeakerWindow.speaker[voicerPosition]["speaker"].toString(),
+                        SpeakerWindow.speaker[voicerPosition]["speaker"].toString(), ttsEdit.text.toString())
             }
         }
     }
 
-    private fun switchSpeaker(speaker: String, value: String) {
-        ttsTv.text = speaker
-        voicer = value
+    private fun switchSpeaker(position: Int) {
+        mSharedPreferences!!.edit().putInt("voicer", position).commit()
+        voicerPosition = position
+        ttsTv.text = SpeakerWindow.speaker[voicerPosition]["speaker"].toString()
     }
 
     override fun onProgress(percent: Int) {
@@ -130,6 +177,7 @@ class HomeActivity : AppCompatActivity(), TTsHelper.OnTtsCallback {
 
     override fun onSynthesizer() {
         toast?.dismiss()
+        showToast(AppToast.ICON_TYPE_SUCCESS,"合成完毕")
     }
 
     override fun onError(code: Int) {
@@ -146,5 +194,20 @@ class HomeActivity : AppCompatActivity(), TTsHelper.OnTtsCallback {
         if (toast == null)
             toast = AppToast(context)
         toast!!.show(AppToast.ICON_TYPE_LOADING, "合成进度：$percent", -1)
+    }
+
+    override fun onBackPressed() {
+        if (recordGroup.visibility == View.VISIBLE) {
+            Player.stop()
+            recordAdapter?.removeSelect()
+            recordHelper!!.hide(recordGroup)
+        } else {
+            moveTaskToBack(false)
+        }
+    }
+
+    override fun onDestroy() {
+        Player.release()
+        super.onDestroy()
     }
 }
